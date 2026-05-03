@@ -3,18 +3,21 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Formulario.css'; 
 import { FiMail, FiLock, FiEyeOff, FiUser, FiCreditCard } from 'react-icons/fi'; 
 import BASE_URL from '../config/api'; 
+import { FiMail, FiLock, FiEyeOff, FiUser, FiCreditCard, FiPhone } from 'react-icons/fi';
 
 const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
-  // 1. Estados para guardar lo que el usuario escriba
+  // Estados para guardar lo que el usuario escriba en los campos
   const [cedula, setCedula] = useState('');
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cargandoPadron, setCargandoPadron] = useState(false);
+  const [telefono, setTelefono] = useState('');
+  
 
-  // EFECTO: Capturar datos de Google desde la URL
+  // EFECTO Capturar datos de Google desde la URL
   useEffect(() => {
-    // Esto lee la dirección del navegador tras volver de Google
+    // Aca leemos la dirección del navegador tras volver de Google
     const params = new URLSearchParams(window.location.search);
     const emailGoogle = params.get('email');
     const nameGoogle = params.get('name');
@@ -24,12 +27,12 @@ const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
     
     if (emailGoogle) {
       console.log("Datos de Google cargados con éxito");
-      // Opcional: limpiar la URL para que no se vean los parámetros
+      // Opcional limpiar la URL para que no se vean los parámetros
        window.history.replaceState({}, document.title, "/"); 
     }
   }, []); 
 
-  // 🚩 FUNCIÓN: Consultar el API de PHP del Padrón
+  // FUNCIÓN para Consultar el API de PHP del Padrón
   const consultarPadron = async () => {
     if (cedula.length !== 9) return; 
 
@@ -42,7 +45,7 @@ const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
         const nombreOficial = `${datos.nombre} ${datos.apellidoPaterno} ${datos.apellidoMaterno}`;
         setNombre(nombreOficial);
       } else {
-        alert('Cédula no encontrada en el padrón electoral.');
+        alert('La cédula no se encuentra en el padrón electoral.');
         setNombre('');
       }
     } catch (error) {
@@ -55,21 +58,21 @@ const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
 
   const manejarEnvio = async (e) => {
     e.preventDefault(); 
-    if (!nombre) return alert('Debes validar una cédula real.');
+    if (!nombre) return alert('Se debe usar una cédula real.');
 
     try {
       const respuesta = await fetch(`${BASE_URL}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nombre, email, password, cedula }), 
+        body: JSON.stringify({ name: nombre, email, password, cedula, telefono }), 
       });
 
       const datos = await respuesta.json();
 
       if (respuesta.ok) {
         alert('¡Usuario registrado con éxito!');
-        // Limpiamos todo
-        setNombre(''); setCedula(''); setEmail(''); setPassword('');
+        // Se limpian todos los campos del formulario
+        setNombre(''); setCedula(''); setEmail(''); setPassword(''); setTelefono('');
         cambiarVista(); 
       } else {
         alert('Error: ' + (datos.mensaje || 'No se pudo registrar'));
@@ -107,7 +110,7 @@ const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
           {cargandoPadron && <small style={{color: '#3498db'}}>Verificando en el padrón...</small>}
         </div>
 
-        {/* Campo para el Nombre (READONLY) */}
+        {/* Campo para el Nombre*/}
         <div className="grupo-input">
           <label className="label-input">Official Name (From Padron)</label>
           <div className="contenedor-input-icono">
@@ -152,6 +155,22 @@ const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required 
+            />
+          </div>
+        </div>
+
+        {/* Campo para el Teléfono */}
+        <div className="grupo-input">
+          <label className="label-input">Phone Number</label>
+          <div className="contenedor-input-icono">
+            <FiPhone className="icono-input" />
+            <input
+              type="tel"
+              className="input-estilizado"
+              placeholder="+50688887777"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              required
             />
           </div>
         </div>
