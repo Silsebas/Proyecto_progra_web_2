@@ -1,0 +1,123 @@
+/* src/styles/Formulario.css */
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  text-align: left;
+  display: block;
+}
+
+.btn-back:hover {
+  text-decoration: underline;
+  color: #2980b9;
+}
+
+.pantalla-completa {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f8f9fa; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.contenedor-formulario {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px; 
+}
+
+.texto-subtitulo {
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.texto-titulo {
+  color: #212529;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  margin-top: 0;
+}
+
+.grupo-input {
+  margin-bottom: 20px;
+}
+
+.label-input {
+  font-size: 14px;
+  color: #495057;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.contenedor-input-icono {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icono-input {
+  position: absolute;
+  left: 15px;
+  color: #adb5bd;
+}
+
+.input-estilizado {
+  width: 100%;
+  padding: 12px 12px 12px 45px; 
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-size: 16px;
+  color: #495057;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.input-estilizado:focus {
+  outline: none;
+  border-color: #4285F4; 
+  box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+}
+
+.boton-enviar {
+  width: 100%;
+  padding: 12px;
+  background-color: #4285F4; /* Azul estilo Google */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.boton-enviar:hover {
+  background-color: #3367D6;
+}
+
+.contenedor-enlace {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.texto-enlace {
+  color: #4285F4;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.texto-enlace:hover {
+  text-decoration: underline;
+}

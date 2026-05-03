@@ -1,0 +1,62 @@
+.publicar-pantalla {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.publicar-contenedor {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 800px;
+}
+
+.formulario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas del mismo tamaño */
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+}
+
+.campo label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.campo input, .campo select, .campo textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-family: inherit;
+}
+
+.descripcion-auto {
+  grid-column: 1 / -1; /* Hace que la descripción ocupe las dos columnas */
+}
+
+.btn-publicar {
+  grid-column: 1 / -1;
+  background-color: #2e7d32;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-publicar:hover {
+  background-color: #1b5e20;
+}
