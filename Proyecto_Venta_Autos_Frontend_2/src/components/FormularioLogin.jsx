@@ -4,10 +4,11 @@ import '../styles/Formulario.css';
 import { FiMail, FiLock, FiEyeOff } from 'react-icons/fi';
 import BASE_URL from '../config/api';
 
-const FormularioLogin = ({ cambiarVista, volverCatalogo }) => {
+const FormularioLogin = ({ cambiarVista, volverCatalogo, alRequerir2FA }) => {
   // 1. Estados para guardar el correo y la contraseña
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
 
   // 2. Función para conectar con el backend
   const manejarEnvio = async (e) => {
@@ -24,25 +25,19 @@ const FormularioLogin = ({ cambiarVista, volverCatalogo }) => {
 
       const datos = await respuesta.json();
 
-      if (respuesta.ok) {
-        alert('¡Login exitoso! Bienvenido');
-        console.log('Token recibido:', datos.usuario.token); 
-
-        // MICRÓFONO 1: Ver qué nos dio el backend
-        //console.log("TOKEN RECIBIDO DEL BACKEND EXACTAMENTE ASÍ:", datos.usuario.token);
-        //console.log("USUARIO RECIBIDO DEL BACKEND EXACTAMENTE ASÍ:", datos.usuario.name);
-
-        // Guardamos el token y el usuario en la memoria del navegador
+      if (respuesta.ok && datos.requiere2FA) {
+        // El backend pide verificación 2FA y lo redirigimos a esa pantalla
+        setEmail('');
+        setPassword('');
+        alRequerir2FA(datos.email);
+      } else if (respuesta.ok) {
+        // Login sin 2FA (por si acaso)
         localStorage.setItem('token', datos.usuario.token);
         localStorage.setItem('nombreUsuario', datos.usuario.name);
         localStorage.setItem('idUsuario', datos.usuario.id);
-
-        // Limpiamos los campos
         setEmail('');
         setPassword('');
-        
-        // Si el login es correcto, lo mandamos al catálogo automáticamente
-        volverCatalogo(); 
+        volverCatalogo();
       } else {
         alert('Error: ' + (datos.mensaje || 'Credenciales incorrectas o usuario no registrado'));
       }
