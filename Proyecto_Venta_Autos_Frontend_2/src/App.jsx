@@ -8,6 +8,7 @@ import PublicarAuto from './components/PublicarAuto';
 import DetalleAuto from './components/DetalleAuto';
 import Inbox from './components/Inbox';
 import BASE_URL from './config/api';
+import Verificacion2FA from './components/Verificacion2FA';
 
 function App() {
   const navigate = useNavigate();
@@ -16,12 +17,13 @@ function App() {
   const [autoSeleccionado, setAutoSeleccionado] = useState(null);
   const [autoAEditar, setAutoAEditar] = useState(null);
 
-  // 🚩 EFECTO PARA CAPTURAR RESPUESTA DE GOOGLE OAUTH
+  // EFECTO PARA CAPTURAR RESPUESTA DE GOOGLE OAUTH
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tokenGoogle = params.get('token');
     const nombreGoogle = params.get('nombre');
     const emailNuevo = params.get('email');
+    const [email2FA, setEmail2FA] = useState('');
 
     if (tokenGoogle) {
       localStorage.setItem('token', tokenGoogle);
@@ -114,6 +116,18 @@ function App() {
         <FormularioLogin
           cambiarVista={() => navigate('/registro')}
           volverCatalogo={() => navigate('/')}
+          alRequerir2FA={(email) => {
+            setEmail2FA(email);
+            navigate('/verificar');
+          }}
+        />
+      } />
+
+      <Route path="/verificar" element={
+        <Verificacion2FA
+          email={email2FA}
+          volverCatalogo={() => navigate('/')}
+          alVerificar={() => navigate('/')}
         />
       } />
 
