@@ -28,6 +28,16 @@ const userSchema = new mongoose.Schema({
     isActivated: {
         type: Boolean,
         default: true
+    },
+    telefono: {
+        type: String,
+        trim: true
+    },
+    codigo2FA: {
+        type: String
+    },
+    expiracion2FA: {
+        type: Date
     }
 }, {
     timestamps: true 

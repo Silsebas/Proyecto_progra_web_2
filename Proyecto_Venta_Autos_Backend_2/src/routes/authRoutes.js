@@ -4,10 +4,7 @@ const passport = require('passport');
 const { generarToken } = require('../config/jwt');// Para generar el token de sesión (JWT)
 
 // Importamos las funciones del controlador de autenticación
-const { 
-    registrarUsuario, 
-    loginUsuario
-} = require('../controllers/authController');
+const { registrarUsuario, loginUsuario, verificarCodigo2FA } = require('../controllers/authController');
 
 // Importamos los middlewares de validación
 const { validar, reglasRegistro, reglasLogin } = require('../middlewares/validaciones');
@@ -15,6 +12,7 @@ const { validar, reglasRegistro, reglasLogin } = require('../middlewares/validac
 // --- RUTAS TRADICIONALES de autenticación ---
 router.post('/register', reglasRegistro, validar, registrarUsuario);
 router.post('/login', reglasLogin, validar, loginUsuario);
+router.post('/verificar-2fa', verificarCodigo2FA);
 
 // --- RUTAS GOOGLE OAUTH ---
 router.get('/auth/google', passport.authenticate('google', { 

@@ -4,6 +4,8 @@ const User = require('../models/User');
 const axios = require('axios'); // Para comunicarnos con el microservicio de PHP (Padrón)
 const sgMail = require('@sendgrid/mail'); // Para el envío de correos electrónicos
 const { generarToken } = require('../config/jwt');// Para generar el token de sesión (JWT)
+const { enviarCodigoSMS } = require('../config/twilio');
+const { generarCodigo } = require('../utils/codigo');
 
 // Configuramos SendGrid con la llave guardada en el archivo .env
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -95,28 +97,72 @@ const loginUsuario = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // 1. Buscar el usuario por correo
         const usuario = await User.findOne({ email });
 
-        // 2. Si no existe, responder genérico (no revelar si el correo existe o no)
         if (!usuario) {
             return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
         }
 
-        // 3. Verificar si la cuenta está activada
         if (!usuario.isActivated) {
             return res.status(401).json({ mensaje: 'Cuenta no activada. Revisa tu correo.' });
         }
 
-        // 4. Comparar la contraseña
         const passwordCorrecta = await usuario.matchPassword(password);
         if (!passwordCorrecta) {
             return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
         }
 
-        // 5. Todo correcto — devolver token
+        // Generar código 2FA y guardarlo en el usuario con expiración de 10 minutos
+        const codigo = generarCodigo();
+        usuario.codigo2FA = codigo;
+        usuario.expiracion2FA = new Date(Date.now() + 10 * 60 * 1000);
+        await usuario.save();
+
+        // Enviar el código por SMS
+        await enviarCodigoSMS(usuario.telefono, codigo);
+
+        // No devolvemos el token aún — esperamos la verificación del código
+        res.status(200).json({
+            mensaje: 'Código enviado por SMS. Ingresa el código para continuar.',
+            requiere2FA: true,
+            email: usuario.email
+        });
+
+    } catch (error) {
+        console.error("Error en el login:", error);
+        res.status(500).json({ mensaje: 'Hubo un error en el servidor al iniciar sesión' });
+    }
+};
+
+// --- FUNCIÓN VERIFICACIÓN DEL CÓDIGO 2FA ---
+const verificarCodigo2FA = async (req, res) => {
+    try {
+        const { email, codigo } = req.body;
+
+        const usuario = await User.findOne({ email });
+
+        if (!usuario) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        // Verificar que el código no haya expirado
+        if (!usuario.expiracion2FA || usuario.expiracion2FA < new Date()) {
+            return res.status(401).json({ mensaje: 'El código ha expirado. Intenta iniciar sesión de nuevo.' });
+        }
+
+        // Verificar que el código coincida
+        if (usuario.codigo2FA !== codigo) {
+            return res.status(401).json({ mensaje: 'Código incorrecto.' });
+        }
+
+        // Limpiar el código usado
+        usuario.codigo2FA = null;
+        usuario.expiracion2FA = null;
+        await usuario.save();
+
+        // Ahora sí devolvemos el token
         res.json({
-            mensaje: 'Login exitoso',
+            mensaje: 'Verificación exitosa',
             usuario: {
                 id: usuario._id,
                 name: usuario.name,
@@ -126,10 +172,10 @@ const loginUsuario = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error en el login:", error);
-        res.status(500).json({ mensaje: 'Hubo un error en el servidor al iniciar sesión' });
+        console.error("Error en verificarCodigo2FA:", error);
+        res.status(500).json({ mensaje: 'Error al verificar el código' });
     }
 };
 
 // Exportamos las funciones para usarlas en las rutas (routes/userRoutes.js)
-module.exports = { registrarUsuario, loginUsuario };
+module.exports = { registrarUsuario, loginUsuario, verificarCodigo2FA };

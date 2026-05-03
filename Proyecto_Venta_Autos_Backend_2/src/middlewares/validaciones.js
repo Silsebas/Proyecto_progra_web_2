@@ -9,7 +9,7 @@ const validar = (req, res, next) => {
     next();
 };
 
-// Reglas para el registro de usuario
+// Reglas para el registro de usuario con email y telefono
 const reglasRegistro = [
     body('email')
         .isEmail()
@@ -29,10 +29,16 @@ const reglasRegistro = [
     body('name')
         .notEmpty()
         .withMessage('El nombre es obligatorio')
-        .trim()
+        .trim(),
+
+    body('telefono')
+        .notEmpty()
+        .withMessage('El teléfono es obligatorio')
+        .matches(/^\+?[\d\s\-]{8,15}$/)
+        .withMessage('El teléfono no tiene un formato válido')    
 ];
 
-// Reglas para el login
+// Reglas para el uso del login
 const reglasLogin = [
     body('email')
         .isEmail()
