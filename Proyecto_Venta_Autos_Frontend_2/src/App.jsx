@@ -16,23 +16,20 @@ function App() {
 
   const [autoSeleccionado, setAutoSeleccionado] = useState(null);
   const [autoAEditar, setAutoAEditar] = useState(null);
+  const [email2FA, setEmail2FA] = useState('');
 
   // EFECTO PARA CAPTURAR RESPUESTA DE GOOGLE OAUTH
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tokenGoogle = params.get('token');
-    const nombreGoogle = params.get('nombre');
-    const emailNuevo = params.get('email');
-    const [email2FA, setEmail2FA] = useState('');
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tokenGoogle = params.get('token');
+        const nombreGoogle = params.get('nombre');
 
-    if (tokenGoogle) {
-      localStorage.setItem('token', tokenGoogle);
-      localStorage.setItem('nombreUsuario', nombreGoogle);
-      navigate('/', { replace: true });
-    } else if (emailNuevo) {
-      navigate('/registro', { replace: false });
-    }
-  }, []);
+        if (tokenGoogle) {
+            localStorage.setItem('token', tokenGoogle);
+            localStorage.setItem('nombreUsuario', decodeURIComponent(nombreGoogle));
+            navigate('/', { replace: true });
+        }
+    }, [location.search]);
 
   // Función para activar la edición
   const prepararEdicion = (auto) => {

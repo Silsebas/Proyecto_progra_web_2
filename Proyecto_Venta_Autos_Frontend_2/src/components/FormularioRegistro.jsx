@@ -1,9 +1,10 @@
 // src/components/FormularioRegistro.jsx
 import React, { useState, useEffect } from 'react';
 import '../styles/Formulario.css'; 
-import { FiMail, FiLock, FiEyeOff, FiUser, FiCreditCard } from 'react-icons/fi'; 
 import BASE_URL from '../config/api'; 
 import { FiMail, FiLock, FiEyeOff, FiUser, FiCreditCard, FiPhone } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
+
 
 const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
   // Estados para guardar lo que el usuario escriba en los campos
@@ -13,24 +14,18 @@ const FormularioRegistro = ({ cambiarVista, volverCatalogo }) => {
   const [password, setPassword] = useState('');
   const [cargandoPadron, setCargandoPadron] = useState(false);
   const [telefono, setTelefono] = useState('');
+  const location = useLocation();
   
 
   // EFECTO Capturar datos de Google desde la URL
-  useEffect(() => {
-    // Aca leemos la dirección del navegador tras volver de Google
-    const params = new URLSearchParams(window.location.search);
-    const emailGoogle = params.get('email');
-    const nameGoogle = params.get('name');
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const emailGoogle = params.get('email');
+        const nameGoogle = params.get('name');
 
-    if (emailGoogle) setEmail(emailGoogle);
-    if (nameGoogle) setNombre(nameGoogle);
-    
-    if (emailGoogle) {
-      console.log("Datos de Google cargados con éxito");
-      // Opcional limpiar la URL para que no se vean los parámetros
-       window.history.replaceState({}, document.title, "/"); 
-    }
-  }, []); 
+        if (emailGoogle) setEmail(decodeURIComponent(emailGoogle));
+        if (nameGoogle) setNombre(decodeURIComponent(nameGoogle));
+    }, [location.search]);
 
   // FUNCIÓN para Consultar el API de PHP del Padrón
   const consultarPadron = async () => {
