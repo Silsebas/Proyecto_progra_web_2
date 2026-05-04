@@ -1,11 +1,11 @@
 // Importamos los modelos y librerías necesarias
 const User = require('../models/User');
-//const jwt = require('jsonwebtoken'); // Para manejar la seguridad con tokens
 const axios = require('axios'); // Para comunicarnos con el microservicio de PHP (Padrón)
 const sgMail = require('@sendgrid/mail'); // Para el envío de correos electrónicos
 const { generarToken } = require('../config/jwt');// Para generar el token de sesión (JWT)
 const { enviarCodigoSMS } = require('../config/twilio');
 const { generarCodigo } = require('../utils/codigo');
+const crypto = require('crypto');
 
 // Configuramos SendGrid con la llave guardada en el archivo .env
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -15,7 +15,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const registrarUsuario = async (req, res) => {
     try {
         // 1. Extraemos los datos enviados desde el Frontend (React)
-        const { name, email, password, cedula } = req.body;
+        const { name, email, password, cedula, telefono  } = req.body;
 
         // --- PASO NUEVO: VALIDACIÓN CON EL PADRÓN ELECTORAL (MICROSERVICIO PHP) ---
         let nombreOficial = name; // Variable para guardar el nombre real del registro civil
@@ -46,33 +46,38 @@ const registrarUsuario = async (req, res) => {
         }
 
         // 3. Creamos el nuevo usuario usando el NOMBRE OFICIAL obtenido del Padrón
+        // Generar token único de activación
+        const tokenActivacion = crypto.randomBytes(32).toString('hex');
+
         const usuario = await User.create({
-            name: nombreOficial, // Guardamos el nombre real validado por el TSE
+            name: nombreOficial,
             email,
             password,
             cedula,
-            isActivated: false 
-        }); 
+            telefono,
+            tokenActivacion
+        });
 
-        // --- PASO NUEVO: ENVÍO DE CORREO DE BIENVENIDA (SENDGRID) ---
+        // --- ENVÍO DE CORREO DE BIENVENIDA (SENDGRID) ---
         const msg = {
-            to: email, // Correo del usuario que se acaba de registrar
-            from: process.env.EMAIL_FROM, // Tu correo verificado en SendGrid
-            subject: '¡Bienvenido a Market Vehículos! - Identidad Verificada',
+            to: email,
+            from: process.env.EMAIL_FROM,
+            subject: 'Activa tu cuenta en Market Vehículos',
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                    <h2 style="color: #2c3e50;">Hola, ${nombreOficial}</h2>
-                    <p>Gracias por registrarte en <strong>Market Vehículos</strong>.</p>
-                    <p>Tu identidad ha sido verificada exitosamente con el número de cédula: <strong>${cedula}</strong>.</p>
-                    <p>Ahora puedes publicar tus vehículos y gestionar tu perfil de forma segura.</p>
-                    <br>
-                    <a href="http://localhost:5173/login" style="background: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Iniciar Sesión</a>
-                    <p style="margin-top: 20px; font-size: 12px; color: #7f8c8d;">Este es un correo automático, por favor no lo respondas.</p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2>¡Bienvenido a Market Vehículos, ${nombreOficial}!</h2>
+                    <p>Para activar tu cuenta haz clic en el siguiente botón:</p>
+                    <a href="http://localhost:4000/api/users/activar/${tokenActivacion}" 
+                    style="background-color: #3498db; color: white; padding: 12px 24px; 
+                            text-decoration: none; border-radius: 6px; display: inline-block;">
+                        Activar mi cuenta
+                    </a>
+                    <p style="color: #999; margin-top: 20px;">
+                        Si no creaste esta cuenta puedes ignorar este correo.
+                    </p>
                 </div>
-            `,
+            `
         };
-
-        // Enviamos el correo de forma asíncrona
         await sgMail.send(msg);
 
         // 4. Respondemos al Frontend que todo salió bien
@@ -92,7 +97,7 @@ const registrarUsuario = async (req, res) => {
     }
 };
 
-// --- FUNCIÓN: LOGIN DE USUARIO ---
+// --- LOGIN DE USUARIO ---
 const loginUsuario = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -120,6 +125,7 @@ const loginUsuario = async (req, res) => {
 
         // Enviar el código por SMS
         await enviarCodigoSMS(usuario.telefono, codigo);
+
 
         // No devolvemos el token aún — esperamos la verificación del código
         res.status(200).json({
@@ -177,5 +183,43 @@ const verificarCodigo2FA = async (req, res) => {
     }
 };
 
+const activarCuenta = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const usuario = await User.findOne({ tokenActivacion: token });
+
+        if (!usuario) {
+            return res.status(400).send(`
+                <div style="font-family: Arial; text-align: center; margin-top: 50px;">
+                    <h2>Link inválido o ya fue usado, pruebe con otro correo</h2>
+                    <p>El link de activación no es válido o ya fue utilizado.</p>
+                    <a href="http://localhost:5173/login">Ir al Login</a>
+                </div>
+            `);
+        }
+
+        usuario.isActivated = true;
+        usuario.tokenActivacion = null;
+        await usuario.save();
+
+        res.send(`
+            <div style="font-family: Arial; text-align: center; margin-top: 50px;">
+                <h2>¡Cuenta activada exitosamente!</h2>
+                <p>Su cuenta ha sido activada. Ya puedes iniciar sesión.</p>
+                <a href="http://localhost:5173/login" 
+                   style="background-color: #3498db; color: white; padding: 12px 24px; 
+                          text-decoration: none; border-radius: 6px; display: inline-block;">
+                    Ir al Login
+                </a>
+            </div>
+        `);
+
+    } catch (error) {
+        console.error("Error al activar cuenta:", error);
+        res.status(500).send('Error al activar la cuenta');
+    }
+};
+
 // Exportamos las funciones para usarlas en las rutas (routes/userRoutes.js)
-module.exports = { registrarUsuario, loginUsuario, verificarCodigo2FA };
+module.exports = { registrarUsuario, loginUsuario, verificarCodigo2FA, activarCuenta };
