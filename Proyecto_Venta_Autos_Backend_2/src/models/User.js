@@ -26,8 +26,11 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
     isActivated: {
-        type: Boolean,
-        default: true
+    type: Boolean,
+    default: false
+    },
+    tokenActivacion: {
+        type: String
     },
     telefono: {
         type: String,
